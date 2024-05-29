@@ -4,13 +4,11 @@ build-job:
     # Use GitLab CI/CD to authenticate -- https://docs.gitlab.com/ee/user/packages/container_registry/authenticate_with_container_registry.html#use-gitlab-cicd-to-authenticate
     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:
-
     - echo "Hello, $GITLAB_USER_LOGIN!"
     - docker build -t ledgerapp .
     # - docker run -p 8000:8080 ledgerapp
     - docker push $CI_REGISTRY_IMAGE
 
-    
 
 # test-job1:
 #   stage: test
@@ -25,11 +23,11 @@ build-job:
 #     - echo "which simulates a test that runs 5 seconds longer than test-job1"
 #     - sleep 5
 
-deploy-prod:
-  stage: deploy
-  script:
-    - echo "This job deploys something from the $CI_COMMIT_BRANCH branch."
-  environment: production
+# deploy-prod:
+#   stage: deploy
+#   script:
+#     - echo "This job deploys something from the $CI_COMMIT_BRANCH branch."
+#   environment: production
 
 
 # # This file is a template, and might need editing before it works on your project.
