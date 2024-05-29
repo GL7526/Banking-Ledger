@@ -1,20 +1,29 @@
 build-job:
   stage: build
+  before_script:
+    # Use GitLab CI/CD to authenticate -- https://docs.gitlab.com/ee/user/packages/container_registry/authenticate_with_container_registry.html#use-gitlab-cicd-to-authenticate
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
   script:
+
     - echo "Hello, $GITLAB_USER_LOGIN!"
+    - docker build -t ledgerapp .
+    # - docker run -p 8000:8080 ledgerapp
+    - docker push $CI_REGISTRY_IMAGE
 
-test-job1:
-  stage: test
-  script:
-    - echo "This job tests something"
+    
 
-test-job2:
-  stage: test
-  script:
-    - echo "This job tests something, but takes more time than test-job1."
-    - echo "After the echo commands complete, it runs the sleep command for 5 seconds"
-    - echo "which simulates a test that runs 5 seconds longer than test-job1"
-    - sleep 5
+# test-job1:
+#   stage: test
+#   script:
+#     - echo "This job tests something"
+
+# test-job2:
+#   stage: test
+#   script:
+#     - echo "This job tests something, but takes more time than test-job1."
+#     - echo "After the echo commands complete, it runs the sleep command for 5 seconds"
+#     - echo "which simulates a test that runs 5 seconds longer than test-job1"
+#     - sleep 5
 
 deploy-prod:
   stage: deploy
