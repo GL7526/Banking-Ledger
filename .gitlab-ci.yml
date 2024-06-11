@@ -1,0 +1,102 @@
+# default:
+#   image: docker:24.0.5
+#   services:
+#     - docker:24.0.5-dind
+#   before_script:
+# #     - docker info
+
+# variables:
+#   # When you use the dind service, you must instruct Docker to talk with
+#   # the daemon started inside of the service. The daemon is available
+#   # with a network connection instead of the default
+#   # /var/run/docker.sock socket. Docker 19.03 does this automatically
+#   # by setting the DOCKER_HOST in
+#   # https://github.com/docker-library/docker/blob/d45051476babc297257df490d22cbd806f1b11e4/19.03/docker-entrypoint.sh#L23-L29
+#   #
+#   # The 'docker' hostname is the alias of the service container as described at
+#   # https://docs.gitlab.com/ee/ci/services/#accessing-the-services.
+#   #
+#   # Specify to Docker where to create the certificates. Docker
+#   # creates them automatically on boot, and creates
+#   # `/certs/client` to share between the service and job
+#   # container, thanks to volume mount from config.toml
+#   DOCKER_TLS_CERTDIR: "/certs"
+
+# build:
+#   stage: build
+#   script:
+#     - docker build -t my-docker-image .
+#     - docker run my-docker-image /script/to/run/tests
+
+
+# build-job:
+#   stage: build
+#   before_script:
+#     # Use GitLab CI/CD to authenticate -- https://docs.gitlab.com/ee/user/packages/container_registry/authenticate_with_container_registry.html#use-gitlab-cicd-to-authenticate
+#     - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+#   script:
+#     - echo "Hello, $GITLAB_USER_LOGIN!"
+#     - docker build -t ledgerapp .
+#     # - docker run -p 8000:8080 ledgerapp
+#     - docker push $CI_REGISTRY_IMAGE
+
+
+# test-job1:
+#   stage: test
+#   script:
+#     - echo "This job tests something"
+
+# test-job2:
+#   stage: test
+#   script:
+#     - echo "This job tests something, but takes more time than test-job1."
+#     - echo "After the echo commands complete, it runs the sleep command for 5 seconds"
+#     - echo "which simulates a test that runs 5 seconds longer than test-job1"
+#     - sleep 5
+
+# deploy-prod:
+#   stage: deploy
+#   script:
+#     - echo "This job deploys something from the $CI_COMMIT_BRANCH branch."
+#   environment: production
+
+
+# This file is a template, and might need editing before it works on your project.
+# To contribute improvements to CI/CD templates, please follow the Development guide at:
+# https://docs.gitlab.com/ee/development/cicd/templates.html
+# This specific template is located at:
+# https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Docker.gitlab-ci.yml
+
+# Build a Docker image with CI/CD and push to the GitLab registry.
+# Docker-in-Docker documentation: https://docs.gitlab.com/ee/ci/docker/using_docker_build.html
+#
+# This template uses one generic job with conditional builds
+# for the default branch and all other (MR) branches.
+
+docker-build:
+  # Use the official docker image.
+  image: docker:24.0.5
+  stage: build
+  services:
+    - docker:dind
+  variables:
+    DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  # All branches are tagged with $DOCKER_IMAGE_NAME (defaults to commit ref slug)
+  # Default branch is also tagged with `latest`
+  script:
+    - docker build --pull -t "$DOCKER_IMAGE_NAME" .
+    - docker push "$DOCKER_IMAGE_NAME"
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+        docker tag "$DOCKER_IMAGE_NAME" "$CI_REGISTRY_IMAGE:latest"
+        docker push "$CI_REGISTRY_IMAGE:latest"
+      fi
+  # Run this job in a branch where a Dockerfile exists
+  rules:
+    - if: $CI_COMMIT_BRANCH
+      exists:
+        - Dockerfile
+#  environment:
+#    name: dev-branch
