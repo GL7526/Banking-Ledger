@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: LedgerApp
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: LedgerApp
+    spec:
+      containers:
+        - name: LedgerAppContainer
+          image: registry.gitlab.com/gl75261/banking-ledger
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+      imagePullSecrets:
+        - name: registry.gitlab.com
